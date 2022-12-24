@@ -17,7 +17,7 @@ func NewHandler(db *sql.DB) *Handler {
 	return &Handler{db: db}
 }
 
-func (t *Handler) CreateExpenseHandler(c echo.Context) error {
+func (h *Handler) CreateExpenseHandler(c echo.Context) error {
 	e := Expense{}
 	err := c.Bind(&e)
 	if err != nil {
@@ -25,7 +25,7 @@ func (t *Handler) CreateExpenseHandler(c echo.Context) error {
 	}
 
 	tags := e.Tags
-	row := db.QueryRow("INSERT INTO expenses (title, amount, note, tags) values ($1, $2, $3, $4)  RETURNING id",
+	row := h.db.QueryRow("INSERT INTO expenses (title, amount, note, tags) values ($1, $2, $3, $4)  RETURNING id",
 		e.Title,
 		e.Amount,
 		e.Note,
