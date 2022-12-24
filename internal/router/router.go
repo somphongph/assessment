@@ -1,11 +1,12 @@
 package router
 
 import (
+	"database/sql"
 	"log"
 	"os"
 
-	"github.com/labstack/echo"
-	"github.com/labstack/echo/middleware"
+	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 	"github.com/somphongph/assessment/internal/expense"
 )
 
@@ -16,9 +17,17 @@ func NewRouter() *echo.Echo {
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
 
-	ex := e.Group("/expenses")
+	db, err := sql.Open("postgres", os.Getenv("DATABASE_URL"))
+	if err != nil {
+		log.Fatal("Connect to database error", err)
+	}
+	defer db.Close()
+
+	expense.InitDB()
+	expenseHandler := expense.NewHandler(db)
+	expense := e.Group("/expenses")
 	{
-		ex.POST("", expense.CreateExpenseHandler)
+		expense.POST("", expenseHandler.CreateExpenseHandler)
 	}
 
 	log.Fatal(e.Start(os.Getenv("PORT")))

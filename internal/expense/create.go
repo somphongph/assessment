@@ -1,14 +1,23 @@
 package expense
 
 import (
+	"database/sql"
 	"net/http"
 
-	"github.com/labstack/echo"
+	"github.com/labstack/echo/v4"
 	"github.com/lib/pq"
 	"github.com/somphongph/assessment/internal/model"
 )
 
-func CreateExpenseHandler(c echo.Context) error {
+type Handler struct {
+	db *sql.DB
+}
+
+func NewHandler(db *sql.DB) *Handler {
+	return &Handler{db: db}
+}
+
+func (t *Handler) CreateExpenseHandler(c echo.Context) error {
 	e := Expense{}
 	err := c.Bind(&e)
 	if err != nil {
