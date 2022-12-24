@@ -28,6 +28,7 @@ func NewRouter() *echo.Echo {
 	expense := e.Group("/expenses")
 	{
 		expense.POST("", expenseHandler.CreateExpenseHandler)
+		expense.GET(":id", expenseHandler.GetExpenseHandler)
 	}
 
 	log.Fatal(e.Start(os.Getenv("PORT")))
