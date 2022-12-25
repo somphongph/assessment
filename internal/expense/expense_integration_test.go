@@ -1,5 +1,3 @@
-//go:build integration
-
 package expense
 
 import (
@@ -8,6 +6,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -19,7 +18,7 @@ func TestCreateExpense(t *testing.T) {
 		"title": "strawberry smoothie",
 		"amount": 79,
 		"note": "night market promotion discount 10 bath",
-		"tags":["food", "beverage"]}
+		"tags":["food", "beverage"]
 	}`)
 
 	var e Expense
@@ -31,6 +30,39 @@ func TestCreateExpense(t *testing.T) {
 	assert.NotEqual(t, 0, e.Id)
 	assert.Equal(t, "strawberry smoothie", e.Title)
 	assert.Equal(t, uint(79), e.Amount)
+	assert.Equal(t, "night market promotion discount 10 bath", e.Note)
+	assert.Equal(t, []string{"food", "beverage"}, e.Tags)
+}
+
+func TestGetExpenseByID(t *testing.T) {
+	c := seedExpense(t)
+
+	var latest Expense
+	res := request(http.MethodGet, uri("expenses", strconv.Itoa(c.Id)), nil)
+	err := res.Decode(&latest)
+
+	assert.Nil(t, err)
+	assert.Equal(t, http.StatusOK, res.StatusCode)
+	assert.Equal(t, c.Id, latest.Id)
+	assert.NotEmpty(t, latest.Title)
+	assert.NotEmpty(t, latest.Amount)
+	assert.NotEmpty(t, latest.Note)
+	assert.NotEmpty(t, latest.Tags)
+}
+
+func seedExpense(t *testing.T) Expense {
+	var e Expense
+	body := bytes.NewBufferString(`{
+		"title": "strawberry smoothie",
+		"amount": 79,
+		"note": "night market promotion discount 10 bath",
+		"tags":["food", "beverage"]
+	}`)
+	err := request(http.MethodPost, uri("expenses"), body).Decode(&e)
+	if err != nil {
+		t.Fatal("can't create expense:", err)
+	}
+	return e
 }
 
 func uri(paths ...string) string {
