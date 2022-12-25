@@ -2,6 +2,8 @@ package expense
 
 import (
 	"bytes"
+	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"regexp"
@@ -14,36 +16,35 @@ import (
 )
 
 var (
-	expenseBody = bytes.NewBufferString(`{
-		"title": "strawberry smoothie",
-		"amount": 79,
-		"note": "night market promotion discount 10 bath",
-		"tags":["food", "beverage"]
-	}`)
-)
-
-func TestCreateExpenseHandler(t *testing.T) {
-	db, mock, _ := sqlmock.New()
-
-	ex := Expense{
+	expense = Expense{
 		Title:  "strawberry smoothie",
 		Amount: 79,
 		Note:   "night market promotion discount 10 bath",
 		Tags:   []string{"food", "beverage"},
 	}
+)
 
-	tags := ex.Tags
+func TestCreateExpenseHandler(t *testing.T) {
+	// Mock
+	db, mock, _ := sqlmock.New()
+
+	tags := expense.Tags
 	mockedSql := `INSERT INTO expenses (title, amount, note, tags) values ($1, $2, $3, $4)  RETURNING id`
-	mockedRow := sqlmock.NewRows([]string{"id"}).
-		AddRow(1)
+	mockedRow := sqlmock.NewRows([]string{"id"}).AddRow(1)
 
 	mock.ExpectQuery(regexp.QuoteMeta(mockedSql)).
-		WithArgs(ex.Title, ex.Amount, ex.Note, pq.Array(&tags)).
+		WithArgs(expense.Title, expense.Amount, expense.Note, pq.Array(&tags)).
 		WillReturnRows((mockedRow))
 
 	// Setup
+	b, err := json.Marshal(expense)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
 	e := echo.New()
-	req := httptest.NewRequest(http.MethodPost, "/", expenseBody)
+	req := httptest.NewRequest(http.MethodPost, "/", bytes.NewBuffer(b))
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
