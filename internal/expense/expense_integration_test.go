@@ -1,3 +1,5 @@
+//go:build integration
+
 package expense
 
 import (
@@ -50,14 +52,37 @@ func TestGetExpenseByID(t *testing.T) {
 	assert.NotEmpty(t, latest.Tags)
 }
 
+func TestUpdateExpenseByID(t *testing.T) {
+	body := bytes.NewBufferString(`{
+		"title": "apple smoothie",
+		"amount": 89,
+		"note": "no discount",
+		"tags":["beverage"]
+		}`)
+
+	c := seedExpense(t)
+
+	var latest Expense
+	res := request(http.MethodPut, uri("expenses", strconv.Itoa(c.Id)), body)
+	err := res.Decode(&latest)
+
+	assert.Nil(t, err)
+	assert.Equal(t, http.StatusOK, res.StatusCode)
+	assert.Equal(t, "apple smoothie", latest.Title)
+	assert.Equal(t, uint(89), latest.Amount)
+	assert.Equal(t, "no discount", latest.Note)
+	assert.Equal(t, []string{"beverage"}, latest.Tags)
+}
+
 func seedExpense(t *testing.T) Expense {
-	var e Expense
 	body := bytes.NewBufferString(`{
 		"title": "strawberry smoothie",
 		"amount": 79,
 		"note": "night market promotion discount 10 bath",
 		"tags":["food", "beverage"]
 	}`)
+
+	var e Expense
 	err := request(http.MethodPost, uri("expenses"), body).Decode(&e)
 	if err != nil {
 		t.Fatal("can't create expense:", err)
@@ -84,7 +109,6 @@ func (r *Response) Decode(v interface{}) error {
 	if r.err != nil {
 		return r.err
 	}
-
 	return json.NewDecoder(r.Body).Decode(v)
 }
 
