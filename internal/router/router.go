@@ -11,20 +11,20 @@ import (
 )
 
 func NewRouter() *echo.Echo {
-	// create a new echo instance
-	e := echo.New()
-
-	e.Use(middleware.Logger())
-	e.Use(middleware.Recover())
-
 	db, err := sql.Open("postgres", os.Getenv("DATABASE_URL"))
 	if err != nil {
 		log.Fatal("Connect to database error", err)
 	}
 	defer db.Close()
 
-	expense.InitDB()
+	// create a new echo instance
+	e := echo.New()
+
+	e.Use(middleware.Logger())
+	e.Use(middleware.Recover())
+
 	expenseHandler := expense.NewHandler(db)
+	expenseHandler.InitDB()
 	expense := e.Group("/expenses")
 	{
 		expense.POST("", expenseHandler.CreateExpenseHandler)
