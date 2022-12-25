@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/labstack/echo/v4"
+	"github.com/lib/pq"
 	"github.com/somphongph/assessment/internal/model"
 )
 
@@ -21,7 +22,7 @@ func (h *Handler) GetAllExpenseHandler(c echo.Context) error {
 	expenses := []Expense{}
 	for rows.Next() {
 		var e Expense
-		err = rows.Scan(&e.Id, &e.Title, &e.Amount, &e.Note, &e.Tags)
+		err = rows.Scan(&e.Id, &e.Title, &e.Amount, &e.Note, (*pq.StringArray)(&e.Tags))
 		if err != nil {
 			return c.JSON(http.StatusInternalServerError, model.Err{Message: "can't scan expenses:" + err.Error()})
 		}

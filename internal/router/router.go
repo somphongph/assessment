@@ -27,8 +27,9 @@ func NewRouter() *echo.Echo {
 	expenseHandler.InitDB()
 	expense := e.Group("/expenses")
 	{
-		expense.POST("", expenseHandler.CreateExpenseHandler)
 		expense.GET("/:id", expenseHandler.GetByIdExpenseHandler)
+		expense.GET("", expenseHandler.GetAllExpenseHandler)
+		expense.POST("", expenseHandler.CreateExpenseHandler)
 		expense.PUT("/:id", expenseHandler.UpdateExpenseHandler)
 	}
 
