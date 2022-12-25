@@ -1,6 +1,7 @@
 package expense
 
 import (
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"regexp"
@@ -45,5 +46,48 @@ func TestCreateExpense(t *testing.T) {
 	if assert.NoError(t, h.CreateExpenseHandler(c)) {
 		// assert.Equal(t, http.StatusCreated, rec.Code)
 		// assert.Equal(t, expenseJSON, rec.Body.String())
+	}
+}
+
+func TestGetExpense(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	}
+	defer db.Close()
+
+	expense := &Expense{
+		Id:     1,
+		Title:  "",
+		Amount: 39000,
+		Note:   "",
+		Tags:   []string{"food", "beverage"},
+	}
+
+	query := `SELECT id, title, amount, note, tags FROM "expenses" WHERE (id = $1)`
+	rows := sqlmock.
+		NewRows([]string{"id", "title", "amount", "note", "tags"}).
+		AddRow(expense.Id, expense.Title, expense.Amount, expense.Note, expense.Tags)
+
+	mock.ExpectQuery(regexp.QuoteMeta(query)).
+		WithArgs(expense.Id).
+		WillReturnRows(rows)
+
+	// Setup
+	e := echo.New()
+	req := httptest.NewRequest(http.MethodGet, "/expenses", nil)
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+	c.SetParamNames("id")
+	c.SetParamValues("1")
+	h := NewHandler(db)
+
+	fmt.Println(expenseJSON)
+	fmt.Println(rec.Body.String())
+
+	// Assertions
+	if assert.NoError(t, h.GetExpenseHandler(c)) {
+		assert.Equal(t, http.StatusOK, rec.Code)
+		assert.Equal(t, expenseJSON, rec.Body.String())
 	}
 }

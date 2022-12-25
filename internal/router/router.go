@@ -29,6 +29,7 @@ func NewRouter() *echo.Echo {
 	{
 		expense.POST("", expenseHandler.CreateExpenseHandler)
 		expense.GET("/:id", expenseHandler.GetExpenseHandler)
+		expense.PUT("/:id", expenseHandler.UpdateExpenseHandler)
 	}
 
 	log.Fatal(e.Start(os.Getenv("PORT")))
