@@ -9,6 +9,7 @@ import (
 )
 
 func (h *Handler) UpdateExpenseHandler(c echo.Context) error {
+	id := c.Param("id")
 	e := Expense{}
 	if err := c.Bind(&e); err != nil {
 		return c.JSON(http.StatusBadRequest, model.Err{Message: err.Error()})
@@ -20,7 +21,7 @@ func (h *Handler) UpdateExpenseHandler(c echo.Context) error {
 	}
 
 	tags := e.Tags
-	if _, err := stmt.Exec(e.Id, e.Title, e.Amount, e.Note, pq.Array(&tags)); err != nil {
+	if _, err := stmt.Exec(id, e.Title, e.Amount, e.Note, pq.Array(&tags)); err != nil {
 		c.JSON(http.StatusInternalServerError, model.Err{Message: "error execute update:" + err.Error()})
 	}
 
