@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"regexp"
+	"strconv"
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
@@ -53,5 +54,36 @@ func TestCreateExpenseHandler(t *testing.T) {
 	// Assertions
 	if assert.NoError(t, h.CreateExpenseHandler(c)) {
 		assert.Equal(t, http.StatusCreated, rec.Code)
+	}
+}
+
+func TestGetByIdExpenseHandler(t *testing.T) {
+	// Mock
+	db, mock, _ := sqlmock.New()
+
+	id := 1
+	tags := expense.Tags
+	mockedSql := `SELECT id, title, amount, note, tags FROM expenses WHERE id = $1`
+	mockedRow := sqlmock.NewRows([]string{"id", "title", "amount", "note", "tags"}).
+		AddRow(id, expense.Title, expense.Amount, expense.Note, (*pq.StringArray)(&tags))
+
+	mock.ExpectPrepare(regexp.QuoteMeta(mockedSql)).ExpectQuery().
+		WithArgs(strconv.Itoa(id)).
+		WillReturnRows((mockedRow))
+
+	// Setup
+	e := echo.New()
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+	c.SetPath("/:id")
+	c.SetParamNames("id")
+	c.SetParamValues(strconv.Itoa(id))
+	h := NewHandler(db)
+
+	// Assertions
+	if assert.NoError(t, h.GetByIdExpenseHandler(c)) {
+		assert.Equal(t, http.StatusOK, rec.Code)
 	}
 }
