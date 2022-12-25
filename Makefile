@@ -4,3 +4,6 @@ test-cover:
 
 test:
 	go test -v ./...
+
+test-ingt:
+	go test -v ./... -tags integration 

@@ -19,8 +19,8 @@ func NewHandler(db *sql.DB) *Handler {
 
 func (h *Handler) CreateExpenseHandler(c echo.Context) error {
 	e := Expense{}
-	err := c.Bind(&e)
-	if err != nil {
+
+	if err := c.Bind(&e); err != nil {
 		return c.JSON(http.StatusBadRequest, model.Err{Message: err.Error()})
 	}
 
@@ -31,7 +31,7 @@ func (h *Handler) CreateExpenseHandler(c echo.Context) error {
 		e.Note,
 		pq.Array(&tags),
 	)
-	err = row.Scan(&e.Id)
+	err := row.Scan(&e.Id)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, model.Err{Message: err.Error()})
 	}
