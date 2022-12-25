@@ -30,7 +30,7 @@ func TestCreateExpenseHandler(t *testing.T) {
 	db, mock, _ := sqlmock.New()
 
 	tags := expense.Tags
-	mockedSql := `INSERT INTO expenses (title, amount, note, tags) values ($1, $2, $3, $4)  RETURNING id`
+	mockedSql := "INSERT INTO expenses (title, amount, note, tags) values ($1, $2, $3, $4)  RETURNING id"
 	mockedRow := sqlmock.NewRows([]string{"id"}).AddRow(1)
 
 	mock.ExpectQuery(regexp.QuoteMeta(mockedSql)).
@@ -63,7 +63,7 @@ func TestGetByIdExpenseHandler(t *testing.T) {
 
 	id := 1
 	tags := expense.Tags
-	mockedSql := `SELECT id, title, amount, note, tags FROM expenses WHERE id = $1`
+	mockedSql := "SELECT id, title, amount, note, tags FROM expenses WHERE id = $1"
 	mockedRow := sqlmock.NewRows([]string{"id", "title", "amount", "note", "tags"}).
 		AddRow(id, expense.Title, expense.Amount, expense.Note, (*pq.StringArray)(&tags))
 
@@ -84,6 +84,42 @@ func TestGetByIdExpenseHandler(t *testing.T) {
 
 	// Assertions
 	if assert.NoError(t, h.GetByIdExpenseHandler(c)) {
+		assert.Equal(t, http.StatusOK, rec.Code)
+	}
+}
+
+func TestUpdateExpenseHandler(t *testing.T) {
+	// Mock
+	db, mock, _ := sqlmock.New()
+
+	id := 1
+	tags := expense.Tags
+	mockedSql := "UPDATE expenses SET title = $2, amount = $3, note = $4, tags = $5 WHERE id = $1"
+	mockedRow := sqlmock.NewResult(1, 1)
+
+	mock.ExpectPrepare(regexp.QuoteMeta(mockedSql)).ExpectExec().
+		WithArgs(strconv.Itoa(id), expense.Title, expense.Amount, expense.Note, pq.Array(&tags)).
+		WillReturnResult(mockedRow)
+
+	// Setup
+	b, err := json.Marshal(expense)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	e := echo.New()
+	req := httptest.NewRequest(http.MethodPut, "/", bytes.NewBuffer(b))
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+	c.SetPath("/:id")
+	c.SetParamNames("id")
+	c.SetParamValues(strconv.Itoa(id))
+	h := NewHandler(db)
+
+	// Assertions
+	if assert.NoError(t, h.UpdateExpenseHandler(c)) {
 		assert.Equal(t, http.StatusOK, rec.Code)
 	}
 }
