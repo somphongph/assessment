@@ -25,13 +25,20 @@ var (
 func TestCreateExpenseHandler(t *testing.T) {
 	db, mock, _ := sqlmock.New()
 
-	tags := []string{"food", "beverage"}
+	ex := Expense{
+		Title:  "strawberry smoothie",
+		Amount: 79,
+		Note:   "night market promotion discount 10 bath",
+		Tags:   []string{"food", "beverage"},
+	}
+
+	tags := ex.Tags
 	mockedSql := `INSERT INTO expenses (title, amount, note, tags) values ($1, $2, $3, $4)  RETURNING id`
 	mockedRow := sqlmock.NewRows([]string{"id"}).
 		AddRow(1)
 
 	mock.ExpectQuery(regexp.QuoteMeta(mockedSql)).
-		WithArgs("strawberry smoothie", 79, "night market promotion discount 10 bath", pq.Array(&tags)).
+		WithArgs(ex.Title, ex.Amount, ex.Note, pq.Array(&tags)).
 		WillReturnRows((mockedRow))
 
 	// Setup
