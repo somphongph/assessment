@@ -15,7 +15,7 @@ func (h *Handler) UpdateExpenseHandler(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, model.Err{Message: err.Error()})
 	}
 
-	stmt, err := h.db.Prepare("UPDATE expenses SET title = $2, amount = $3, note = $4, tags = $5 WHERE id = $1 ")
+	stmt, err := h.db.Prepare("UPDATE expenses SET title = $2, amount = $3, note = $4, tags = $5 WHERE id = $1")
 	if err != nil {
 		log.Fatal("can't prepare statment update", err)
 	}
