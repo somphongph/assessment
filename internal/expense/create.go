@@ -25,7 +25,7 @@ func (h *Handler) CreateExpenseHandler(c echo.Context) error {
 	}
 
 	tags := e.Tags
-	row := h.db.QueryRow("INSERT INTO expenses (title, amount, note, tags) values ($1, $2, $3, $4)  RETURNING id",
+	row := h.db.QueryRow(`INSERT INTO expenses (title, amount, note, tags) values ($1, $2, $3, $4)  RETURNING id`,
 		e.Title,
 		e.Amount,
 		e.Note,
