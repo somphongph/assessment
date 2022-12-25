@@ -9,7 +9,7 @@ import (
 	"github.com/somphongph/assessment/internal/model"
 )
 
-func (h *Handler) GetExpenseHandler(c echo.Context) error {
+func (h *Handler) GetByIdExpenseHandler(c echo.Context) error {
 	id := c.Param("id")
 	stmt, err := h.db.Prepare("SELECT id, title, amount, note, tags FROM expenses WHERE id = $1")
 	if err != nil {

@@ -28,7 +28,7 @@ func NewRouter() *echo.Echo {
 	expense := e.Group("/expenses")
 	{
 		expense.POST("", expenseHandler.CreateExpenseHandler)
-		expense.GET("/:id", expenseHandler.GetExpenseHandler)
+		expense.GET("/:id", expenseHandler.GetByIdExpenseHandler)
 		expense.PUT("/:id", expenseHandler.UpdateExpenseHandler)
 	}
 

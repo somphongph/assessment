@@ -86,7 +86,7 @@ func TestGetExpense(t *testing.T) {
 	fmt.Println(rec.Body.String())
 
 	// Assertions
-	if assert.NoError(t, h.GetExpenseHandler(c)) {
+	if assert.NoError(t, h.GetByIdExpenseHandler(c)) {
 		assert.Equal(t, http.StatusOK, rec.Code)
 		assert.Equal(t, expenseJSON, rec.Body.String())
 	}
