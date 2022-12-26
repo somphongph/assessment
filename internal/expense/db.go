@@ -1,10 +1,15 @@
 package expense
 
 import (
+	"database/sql"
 	"log"
 
 	_ "github.com/lib/pq"
 )
+
+func NewHandler(db *sql.DB) *Handler {
+	return &Handler{db: db}
+}
 
 func (h *Handler) InitDB() {
 	createTb := `
