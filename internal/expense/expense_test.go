@@ -27,13 +27,13 @@ var (
 	bodyFailed = bytes.NewBufferString(`{
 		"title": "strawberry smoothie",
 		"amount": "79",
-		"note": "night market promotion discount 10 bath",
-		"tags":["food", "beverage"]
+		"note": 20,
+		"tags": "food", "beverage"
 	}`)
 )
 
 func TestCreateExpenseHandler(t *testing.T) {
-	t.Run("Create Success", func(t *testing.T) {
+	t.Run("Create Expense Success", func(t *testing.T) {
 		// Mock
 		db, mock, _ := sqlmock.New()
 
@@ -65,7 +65,7 @@ func TestCreateExpenseHandler(t *testing.T) {
 		}
 	})
 
-	t.Run("Bind Data Failed", func(t *testing.T) {
+	t.Run("Bind Data Expense Failed", func(t *testing.T) {
 		// Mock
 		db, mock, _ := sqlmock.New()
 
@@ -91,7 +91,7 @@ func TestCreateExpenseHandler(t *testing.T) {
 		}
 	})
 
-	t.Run("Create Failed", func(t *testing.T) {
+	t.Run("Create Expense Failed", func(t *testing.T) {
 		// Mock
 		db, mock, _ := sqlmock.New()
 
@@ -119,95 +119,101 @@ func TestCreateExpenseHandler(t *testing.T) {
 }
 
 func TestGetByIdExpenseHandler(t *testing.T) {
-	// Mock
-	db, mock, _ := sqlmock.New()
+	t.Run("Get Expense by ID Success", func(t *testing.T) {
+		// Mock
+		db, mock, _ := sqlmock.New()
 
-	id := 1
-	tags := expense.Tags
-	mockedSql := "SELECT id, title, amount, note, tags FROM expenses WHERE id = $1"
-	mockedRow := sqlmock.NewRows([]string{"id", "title", "amount", "note", "tags"}).
-		AddRow(id, expense.Title, expense.Amount, expense.Note, pq.Array(&tags))
+		id := 1
+		tags := expense.Tags
+		mockedSql := "SELECT id, title, amount, note, tags FROM expenses WHERE id = $1"
+		mockedRow := sqlmock.NewRows([]string{"id", "title", "amount", "note", "tags"}).
+			AddRow(id, expense.Title, expense.Amount, expense.Note, pq.Array(&tags))
 
-	mock.ExpectPrepare(regexp.QuoteMeta(mockedSql)).ExpectQuery().
-		WithArgs(strconv.Itoa(id)).
-		WillReturnRows((mockedRow))
+		mock.ExpectPrepare(regexp.QuoteMeta(mockedSql)).ExpectQuery().
+			WithArgs(strconv.Itoa(id)).
+			WillReturnRows((mockedRow))
 
-	// Setup
-	e := echo.New()
-	req := httptest.NewRequest(http.MethodGet, "/", nil)
-	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-	rec := httptest.NewRecorder()
-	c := e.NewContext(req, rec)
-	c.SetPath("/:id")
-	c.SetParamNames("id")
-	c.SetParamValues(strconv.Itoa(id))
-	h := NewHandler(db)
+		// Setup
+		e := echo.New()
+		req := httptest.NewRequest(http.MethodGet, "/", nil)
+		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+		rec := httptest.NewRecorder()
+		c := e.NewContext(req, rec)
+		c.SetPath("/:id")
+		c.SetParamNames("id")
+		c.SetParamValues(strconv.Itoa(id))
+		h := NewHandler(db)
 
-	// Assertions
-	if assert.NoError(t, h.GetByIdExpenseHandler(c)) {
-		assert.Equal(t, http.StatusOK, rec.Code)
-	}
+		// Assertions
+		if assert.NoError(t, h.GetByIdExpenseHandler(c)) {
+			assert.Equal(t, http.StatusOK, rec.Code)
+		}
+	})
 }
 
 func TestGetAllExpenseHandler(t *testing.T) {
-	// Mock
-	db, mock, _ := sqlmock.New()
+	t.Run("Get All Expense Success", func(t *testing.T) {
+		// Mock
+		db, mock, _ := sqlmock.New()
 
-	tags := expense.Tags
-	mockedSql := "SELECT id, title, amount, note, tags FROM expenses"
-	mockedRow := sqlmock.NewRows([]string{"id", "title", "amount", "note", "tags"}).
-		AddRow(1, expense.Title, expense.Amount, expense.Note, pq.Array(&tags)).
-		AddRow(2, expense.Title, expense.Amount, expense.Note, pq.Array(&tags))
+		tags := expense.Tags
+		mockedSql := "SELECT id, title, amount, note, tags FROM expenses"
+		mockedRow := sqlmock.NewRows([]string{"id", "title", "amount", "note", "tags"}).
+			AddRow(1, expense.Title, expense.Amount, expense.Note, pq.Array(&tags)).
+			AddRow(2, expense.Title, expense.Amount, expense.Note, pq.Array(&tags))
 
-	mock.ExpectPrepare(regexp.QuoteMeta(mockedSql)).ExpectQuery().
-		WillReturnRows((mockedRow))
+		mock.ExpectPrepare(regexp.QuoteMeta(mockedSql)).ExpectQuery().
+			WillReturnRows((mockedRow))
 
-	// Setup
-	e := echo.New()
-	req := httptest.NewRequest(http.MethodGet, "/", nil)
-	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-	rec := httptest.NewRecorder()
-	c := e.NewContext(req, rec)
-	h := NewHandler(db)
+		// Setup
+		e := echo.New()
+		req := httptest.NewRequest(http.MethodGet, "/", nil)
+		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+		rec := httptest.NewRecorder()
+		c := e.NewContext(req, rec)
+		h := NewHandler(db)
 
-	// Assertions
-	if assert.NoError(t, h.GetAllExpenseHandler(c)) {
-		assert.Equal(t, http.StatusOK, rec.Code)
-	}
+		// Assertions
+		if assert.NoError(t, h.GetAllExpenseHandler(c)) {
+			assert.Equal(t, http.StatusOK, rec.Code)
+		}
+	})
 }
 
 func TestUpdateExpenseHandler(t *testing.T) {
-	// Mock
-	db, mock, _ := sqlmock.New()
+	t.Run("Update Expense Success", func(t *testing.T) {
+		// Mock
+		db, mock, _ := sqlmock.New()
 
-	id := 1
-	tags := expense.Tags
-	mockedSql := "UPDATE expenses SET title = $2, amount = $3, note = $4, tags = $5 WHERE id = $1"
-	mockedRow := sqlmock.NewResult(1, 1)
+		id := 1
+		tags := expense.Tags
+		mockedSql := "UPDATE expenses SET title = $2, amount = $3, note = $4, tags = $5 WHERE id = $1"
+		mockedRow := sqlmock.NewResult(1, 1)
 
-	mock.ExpectPrepare(regexp.QuoteMeta(mockedSql)).ExpectExec().
-		WithArgs(strconv.Itoa(id), expense.Title, expense.Amount, expense.Note, pq.Array(&tags)).
-		WillReturnResult(mockedRow)
+		mock.ExpectPrepare(regexp.QuoteMeta(mockedSql)).ExpectExec().
+			WithArgs(strconv.Itoa(id), expense.Title, expense.Amount, expense.Note, pq.Array(&tags)).
+			WillReturnResult(mockedRow)
 
-	// Setup
-	b, err := json.Marshal(expense)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
+		// Setup
+		b, err := json.Marshal(expense)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
 
-	e := echo.New()
-	req := httptest.NewRequest(http.MethodPut, "/", bytes.NewBuffer(b))
-	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-	rec := httptest.NewRecorder()
-	c := e.NewContext(req, rec)
-	c.SetPath("/:id")
-	c.SetParamNames("id")
-	c.SetParamValues(strconv.Itoa(id))
-	h := NewHandler(db)
+		e := echo.New()
+		req := httptest.NewRequest(http.MethodPut, "/", bytes.NewBuffer(b))
+		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+		rec := httptest.NewRecorder()
+		c := e.NewContext(req, rec)
+		c.SetPath("/:id")
+		c.SetParamNames("id")
+		c.SetParamValues(strconv.Itoa(id))
+		h := NewHandler(db)
 
-	// Assertions
-	if assert.NoError(t, h.UpdateExpenseHandler(c)) {
-		assert.Equal(t, http.StatusOK, rec.Code)
-	}
+		// Assertions
+		if assert.NoError(t, h.UpdateExpenseHandler(c)) {
+			assert.Equal(t, http.StatusOK, rec.Code)
+		}
+	})
 }
