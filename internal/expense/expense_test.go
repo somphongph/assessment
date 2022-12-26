@@ -23,38 +23,99 @@ var (
 		Note:   "night market promotion discount 10 bath",
 		Tags:   []string{"food", "beverage"},
 	}
+
+	bodyFailed = bytes.NewBufferString(`{
+		"title": "strawberry smoothie",
+		"amount": "79",
+		"note": "night market promotion discount 10 bath",
+		"tags":["food", "beverage"]
+	}`)
 )
 
 func TestCreateExpenseHandler(t *testing.T) {
-	// Mock
-	db, mock, _ := sqlmock.New()
+	t.Run("Create Success", func(t *testing.T) {
+		// Mock
+		db, mock, _ := sqlmock.New()
 
-	tags := expense.Tags
-	mockedSql := "INSERT INTO expenses (title, amount, note, tags) values ($1, $2, $3, $4)  RETURNING id"
-	mockedRow := sqlmock.NewRows([]string{"id"}).AddRow(1)
+		tags := expense.Tags
+		mockedSql := "INSERT INTO expenses (title, amount, note, tags) values ($1, $2, $3, $4)  RETURNING id"
+		mockedRow := sqlmock.NewRows([]string{"id"}).AddRow(1)
 
-	mock.ExpectQuery(regexp.QuoteMeta(mockedSql)).
-		WithArgs(expense.Title, expense.Amount, expense.Note, pq.Array(&tags)).
-		WillReturnRows((mockedRow))
+		mock.ExpectQuery(regexp.QuoteMeta(mockedSql)).
+			WithArgs(expense.Title, expense.Amount, expense.Note, pq.Array(&tags)).
+			WillReturnRows((mockedRow))
 
-	// Setup
-	b, err := json.Marshal(expense)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
+		// Setup
+		b, err := json.Marshal(expense)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
 
-	e := echo.New()
-	req := httptest.NewRequest(http.MethodPost, "/", bytes.NewBuffer(b))
-	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-	rec := httptest.NewRecorder()
-	c := e.NewContext(req, rec)
-	h := NewHandler(db)
+		e := echo.New()
+		req := httptest.NewRequest(http.MethodPost, "/", bytes.NewBuffer(b))
+		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+		rec := httptest.NewRecorder()
+		c := e.NewContext(req, rec)
+		h := NewHandler(db)
 
-	// Assertions
-	if assert.NoError(t, h.CreateExpenseHandler(c)) {
-		assert.Equal(t, http.StatusCreated, rec.Code)
-	}
+		// Assertions
+		if assert.NoError(t, h.CreateExpenseHandler(c)) {
+			assert.Equal(t, http.StatusCreated, rec.Code)
+		}
+	})
+
+	t.Run("Bind Data Failed", func(t *testing.T) {
+		// Mock
+		db, mock, _ := sqlmock.New()
+
+		tags := expense.Tags
+		mockedSql := "INSERT INTO expenses (title, amount, note, tags) values ($1, $2, $3, $4)  RETURNING id"
+		mockedRow := sqlmock.NewRows([]string{"id"}).AddRow(1)
+
+		mock.ExpectQuery(regexp.QuoteMeta(mockedSql)).
+			WithArgs(expense.Title, expense.Amount, expense.Note, pq.Array(&tags)).
+			WillReturnRows((mockedRow))
+
+		// Setup
+		e := echo.New()
+		req := httptest.NewRequest(http.MethodPost, "/", bodyFailed)
+		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+		rec := httptest.NewRecorder()
+		c := e.NewContext(req, rec)
+		h := NewHandler(db)
+
+		// Assertions
+		if assert.NoError(t, h.CreateExpenseHandler(c)) {
+			assert.Equal(t, http.StatusBadRequest, rec.Code)
+		}
+	})
+
+	t.Run("Create Failed", func(t *testing.T) {
+		// Mock
+		db, mock, _ := sqlmock.New()
+
+		tags := expense.Tags
+		mockedSql := "INSERT INTO expenses_failed (title, amount, note, tags) values ($1, $2, $3, $4)  RETURNING id"
+		mockedRow := sqlmock.NewRows([]string{"id"}).AddRow(1)
+
+		mock.ExpectQuery(regexp.QuoteMeta(mockedSql)).
+			WithArgs(expense.Title, expense.Amount, expense.Note, pq.Array(&tags)).
+			WillReturnRows((mockedRow))
+
+		// Setup
+		e := echo.New()
+		req := httptest.NewRequest(http.MethodPost, "/", bodyFailed)
+		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+		rec := httptest.NewRecorder()
+		c := e.NewContext(req, rec)
+		h := NewHandler(db)
+
+		// Assertions
+		if assert.NoError(t, h.CreateExpenseHandler(c)) {
+			assert.Equal(t, http.StatusInternalServerError, rec.Code)
+		}
+	})
 }
 
 func TestGetByIdExpenseHandler(t *testing.T) {
