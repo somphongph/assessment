@@ -65,7 +65,7 @@ func TestGetByIdExpenseHandler(t *testing.T) {
 	tags := expense.Tags
 	mockedSql := "SELECT id, title, amount, note, tags FROM expenses WHERE id = $1"
 	mockedRow := sqlmock.NewRows([]string{"id", "title", "amount", "note", "tags"}).
-		AddRow(id, expense.Title, expense.Amount, expense.Note, (*pq.StringArray)(&tags))
+		AddRow(id, expense.Title, expense.Amount, expense.Note, pq.Array(&tags))
 
 	mock.ExpectPrepare(regexp.QuoteMeta(mockedSql)).ExpectQuery().
 		WithArgs(strconv.Itoa(id)).
@@ -84,6 +84,33 @@ func TestGetByIdExpenseHandler(t *testing.T) {
 
 	// Assertions
 	if assert.NoError(t, h.GetByIdExpenseHandler(c)) {
+		assert.Equal(t, http.StatusOK, rec.Code)
+	}
+}
+
+func TestGetAllExpenseHandler(t *testing.T) {
+	// Mock
+	db, mock, _ := sqlmock.New()
+
+	tags := expense.Tags
+	mockedSql := "SELECT id, title, amount, note, tags FROM expenses"
+	mockedRow := sqlmock.NewRows([]string{"id", "title", "amount", "note", "tags"}).
+		AddRow(1, expense.Title, expense.Amount, expense.Note, pq.Array(&tags)).
+		AddRow(2, expense.Title, expense.Amount, expense.Note, pq.Array(&tags))
+
+	mock.ExpectPrepare(regexp.QuoteMeta(mockedSql)).ExpectQuery().
+		WillReturnRows((mockedRow))
+
+	// Setup
+	e := echo.New()
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+	h := NewHandler(db)
+
+	// Assertions
+	if assert.NoError(t, h.GetAllExpenseHandler(c)) {
 		assert.Equal(t, http.StatusOK, rec.Code)
 	}
 }
