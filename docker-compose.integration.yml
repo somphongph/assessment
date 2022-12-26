@@ -1,26 +1,32 @@
-version: '3.2'
+version: '3.8'
 
 networks:
   integration-test-example:
 
 services:
   it_tests:
+    container_name: it_tests
     build:
       context: .
       dockerfile: ./Dockerfile.integration
     volumes:
       - $PWD:/go/src/target
+    environment:
+      - PORT=:2565
+      - DATABASE_URL=postgres://postgres:postgres@it_db
     depends_on:
-      - db
+      - it_db
     networks:
       - integration-test-example
       
-  db:
-    image: postgres:12.12
+  it_db:
+    container_name: it_db
+    image: postgres:15.1-alpine
     environment:
-      POSTGRES_USER: root
-      POSTGRES_PASSWORD: root
-      POSTGRES_DB: go-example-db
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=assessment
     restart: on-failure
     networks:
       - integration-test-example
+      

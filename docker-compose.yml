@@ -2,12 +2,12 @@ version: '3.2'
 
 services:
   it_tests:
+    container_name: it_tests
     build:
       context: .
-      dockerfile: ./Dockerfile.integration
     volumes:
       - $PWD:/go/src/target
-    depends_on:
-      - db
-    networks:
-      - integration-test-example
+    env_file:
+      - ./.env
+    ports:
+      - "2565:2565"
