@@ -1,0 +1,56 @@
+version: '3.8'
+
+networks:
+  integration-test-example:
+
+services:
+  it_tests:
+    container_name: it_tests
+    build:
+      context: .
+      dockerfile: ./Dockerfile.integration
+    volumes:
+      - $PWD:/go/src/target
+    environment:
+      - AUTH_TOKEN=Basic YXBpZGVzaWduOjQ1Njc4
+    depends_on:
+      - db_tests
+      - app_tests
+    networks:
+      - integration-test-example
+    extra_hosts:
+      - localhost:host-gateway
+    
+  app_tests:
+    container_name: app_tests
+    build:
+      context: .
+    volumes:
+      - $PWD:/go/src/target
+    environment:
+      - PORT=:2565
+      - DATABASE_URL=postgres://postgres:postgres@db_tests/assessment?sslmode=disable
+    depends_on:
+      db_tests:
+        condition: service_healthy
+    networks:
+      - integration-test-example    
+    ports:
+      - 2565:2565
+
+  db_tests:
+    container_name: db_tests
+    image: postgres:15.1-alpine
+    restart: on-failure
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=assessment
+    healthcheck:
+      test: ["CMD-SHELL", "sh -c 'pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}'"]
+      interval: 3s
+      timeout: 1s
+      retries: 3
+    networks:
+      - integration-test-example
+      
