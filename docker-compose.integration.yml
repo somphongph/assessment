@@ -12,21 +12,45 @@ services:
     volumes:
       - $PWD:/go/src/target
     environment:
-      - PORT=:2565
-      - DATABASE_URL=postgres://postgres:postgres@it_db
+      - AUTH_TOKEN=Basic YXBpZGVzaWduOjQ1Njc4
     depends_on:
-      - it_db
+      - db_tests
+      - app_tests
     networks:
       - integration-test-example
-      
-  it_db:
-    container_name: it_db
+    extra_hosts:
+      - localhost:host-gateway
+    
+  app_tests:
+    container_name: app_tests
+    build:
+      context: .
+    volumes:
+      - $PWD:/go/src/target
+    environment:
+      - PORT=:2565
+      - DATABASE_URL=postgres://postgres:postgres@db_tests/assessment?sslmode=disable
+    depends_on:
+      db_tests:
+        condition: service_healthy
+    networks:
+      - integration-test-example    
+    ports:
+      - 2565:2565
+
+  db_tests:
+    container_name: db_tests
     image: postgres:15.1-alpine
+    restart: on-failure
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
       - POSTGRES_DB=assessment
-    restart: on-failure
+    healthcheck:
+      test: ["CMD-SHELL", "sh -c 'pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}'"]
+      interval: 3s
+      timeout: 1s
+      retries: 3
     networks:
       - integration-test-example
       

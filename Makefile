@@ -5,8 +5,8 @@ test-cover:
 test:
 	go test -v ./...
 
-test it:
-	AUTH_TOKEN="Basic YXBpZGVzaWduOjQ1Njc4" go test -v ./... -tags=integration 
+test-it:
+	AUTH_TOKEN="Basic YXBpZGVzaWduOjQ1Njc4" go test -v -tags=integration  ./... 
 
 
 docker-build:
@@ -14,3 +14,6 @@ docker-build:
 
 docker-run:
 	docker run -it --rm --name my-running-app --env-file .env my-golang-app
+
+docker-it:
+	docker-compose -f docker-compose.integration.yml up --build --abort-on-container-exit --exit-code-from it_tests
