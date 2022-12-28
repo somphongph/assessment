@@ -1,8 +1,8 @@
 version: '3.2'
 
 services:
-  it_tests:
-    container_name: it_tests
+  app:
+    container_name: app
     build:
       context: .
     volumes:
@@ -10,4 +10,4 @@ services:
     env_file:
       - ./.env
     ports:
-      - "2565:2565"
+      - 2565:2565
